@@ -1,6 +1,8 @@
 # DiscordBot
 A chat bot for discord app based off <a href="https://github.com/hydrabolt/discord.js/">discord.js</a>
+
 Forked from <a href="https://github.com/chalda/DiscordBot">chalsa's DiscordBot</a>
+
 The goal is too have a somewhat useful bot that can be easily managed by user's roles and the channel commands were called in.
 the bot is also designed to be able to handle permissions from multiple servers at once. 
 
