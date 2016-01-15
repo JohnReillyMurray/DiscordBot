@@ -2,7 +2,7 @@
   "name": "discordbot",
   "version": "0.1.0",
   "description": "Simple(ish) bot for discord",
-  "main": "myBot.js",
+  "main": "discord_bot.js",
   "dependencies": {
     "discord.js": "^5.3.2",
     "imgur": "^0.1.7",
