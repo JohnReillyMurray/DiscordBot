@@ -81,6 +81,7 @@ var commands = {
         process: function(bot, msg, suffix) {
             if (msg.channel.isPrivate) {
                 //not in dms
+                console.log("no alias in dms");
                 return;
             }
             var args = suffix.split(" ");
@@ -139,6 +140,7 @@ var commands = {
         process: function(bot, msg, suffix) {
             if (msg.channel.isPrivate) {
                 //not in dms
+                console.log("no setadmin in dms");
                 return;
             }
             var user_permissions = msg.channel.permissionsOf(msg.author);
@@ -167,6 +169,7 @@ var commands = {
         process: function(bot, msg, suffix) {
             if (msg.channel.isPrivate) {
                 //not in dms
+                console.log("no showadmins in dms");
                 return;
             }
             var server = msg.channel.server;
@@ -206,6 +209,7 @@ var commands = {
         process: function(bot, msg, suffix) {
             if (msg.channel.isPrivate) {
                 //not in dms
+                console.log("no makechannelactive in dms");
                 return;
             }
             if (!isChannelActive(msg)) {
@@ -226,13 +230,14 @@ var commands = {
         }
     },
 
-    "deactivechannel": {
+    "deactivatechannel": {
         description: "ADMIN ONLY: makes the channel not active so bot will not work",
         admin: true,
         onlyInActive: true,
         process: function(bot, msg, suffix) {
             if (msg.channel.isPrivate) {
                 //not in dms
+                console.log("no deactivatechannel in dms");
                 return;
             }
             var server = getServer(msg);
@@ -316,6 +321,7 @@ var commands = {
         process: function(bot, msg, suffix) {
             if (msg.channel.isPrivate) {
                 //not in dms
+                console.log("no changename in dms");
                 return;
             }
             bot.setUsername(suffix, function(error) {
@@ -331,6 +337,11 @@ var commands = {
         admin: true,
         onlyInActive: false,
         process: function(bot, msg, suffix) {
+        	if (msg.channel.isPrivate) {
+                //not in dms
+                console.log("no remove streamer in dms");
+                return;
+            }
             allowWords = !allowWords;
             if (allowWords == true) {
                 bot.sendMessage(msg.channel, "special words allowed");
@@ -345,6 +356,11 @@ var commands = {
         admin: true,
         onlyInActive: false,
         process: function(bot, msg, suffix) {
+        	if (msg.channel.isPrivate) {
+                //not in dms
+                console.log("no remove streamer in dms");
+                return;
+            }
             streamers[suffix] = {
                 "active": true,
                 "lastCheck": false
@@ -359,6 +375,11 @@ var commands = {
         admin: true,
         onlyInActive: false,
         process: function(bot, msg, suffix) {
+            if (msg.channel.isPrivate) {
+                //not in dms
+                console.log("no remove streamer in dms");
+                return;
+            }
             streamers[suffix] = {
                 "active": false,
                 "lastCheck": false
@@ -372,6 +393,11 @@ var commands = {
         admin: true,
         onlyInActive: false,
         process: function(bot, msg, suffix) {
+        	if (msg.channel.isPrivate) {
+                //not in dms
+                console.log("no streamchannel in dms");
+                return;
+            }
             streamChannel[getServer(msg).id] = {
                 "channel": msg.channel.id,
                 "active": true
@@ -386,6 +412,11 @@ var commands = {
         admin: true,
         onlyInActive: false,
         process: function(bot, msg, suffix) {
+        	if (msg.channel.isPrivate) {
+                //not in dms
+                console.log("no streamchannel in dms");
+                return;
+            }
             console.log("channel id: " + msg.channel.id);
             var id = streamChannel[getServer(msg).id].channel;
             if (id === msg.channel.id) {
@@ -425,6 +456,11 @@ var commands = {
         admin: true,
         onlyInActive: false,
         process: function(bot, msg, suffix) {
+        	if (msg.channel.isPrivate) {
+                //not in dms
+                console.log("no togglestreamcheck in dms");
+                return;
+            }
             var tmp = streamChannel[getServer(msg).id];
             tmp.active = !tmp.active;
             var info = "streams will now NOT be checked";
