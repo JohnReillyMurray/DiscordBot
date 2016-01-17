@@ -1,8 +1,8 @@
 try {
-	var Discord = require("discord.js");
-} catch (e){
-	console.log("Please run npm install and ensure it passes with no errors!");
-	process.exit();
+    var Discord = require("discord.js");
+} catch (e) {
+    console.log("Please run npm install and ensure it passes with no errors!");
+    process.exit();
 }
 
 // Get the email and password
@@ -16,6 +16,7 @@ var activeChannels;
 //var streamers;
 //var streamChannel;
 var fs = require("fs");
+
 
 try {
     aliases = require("./alias.json");
@@ -31,12 +32,12 @@ try {
     admins = {};
 }
 
-//try {
-//streamChannel = require("./streamChannel.json");
-//} catch (e) {
-////No streamChannels defined
-//streamChannel = {};
-//}
+try {
+    streamChannel = require("./streamChannel.json");
+} catch (e) {
+    //No streamChannels defined
+    streamChannel = {};
+}
 
 
 
@@ -47,12 +48,12 @@ try {
     activeChannels = {};
 }
 
-//try {
-//streamers = require("./streamers.json");
-//} catch (e) {
-////No activeChannels defined
-//streamers = {};
-//}
+try {
+    streamers = require("./streamers.json");
+} catch (e) {
+    //No streamers defined
+    streamers = {};
+}
 
 var https = require('https');
 var http = require('http');
@@ -78,10 +79,10 @@ var commands = {
         onlyInActive: false,
         description: "ADMIN ONLY: Creates command aliases. Useful for making simple commands on the fly",
         process: function(bot, msg, suffix) {
-        if (msg.channel.isPrivate){
-        //not in dms
-        	return;
-        }
+            if (msg.channel.isPrivate) {
+                //not in dms
+                return;
+            }
             var args = suffix.split(" ");
             var name = args.shift();
             if (!name) {
@@ -104,7 +105,6 @@ var commands = {
         description: "Grabs a random picture from a folder in the bot's directory (use it for aliases)",
         onlyInActive: true,
         process: function(bot, msg, suffix) {
-        	//include the possible folder paths
             var possiblePaths = [
                     "./pics/mikeross/",
                     "./pics/GT/",
@@ -137,10 +137,10 @@ var commands = {
         admin: false,
         onlyInActive: false,
         process: function(bot, msg, suffix) {
-        if (msg.channel.isPrivate){
-        //not in dms
-        	return;
-        }
+            if (msg.channel.isPrivate) {
+                //not in dms
+                return;
+            }
             var user_permissions = msg.channel.permissionsOf(msg.author);
             if (user_permissions.hasPermission("banMembers") || user_permissions.hasPermission("manageRoles")) {
                 var server = msg.channel.server;
@@ -165,10 +165,10 @@ var commands = {
         admin: false,
         onlyInActive: true,
         process: function(bot, msg, suffix) {
-        if (msg.channel.isPrivate){
-        //not in dms
-        	return;
-        }
+            if (msg.channel.isPrivate) {
+                //not in dms
+                return;
+            }
             var server = msg.channel.server;
             var roleId = admins[server.id];
             if (roleId) {
@@ -199,17 +199,15 @@ var commands = {
         }
     },
 
-    //"isadmin": { //process: function(bot, msg, suffix) { //var reply = "you are not an admin"; //if (isUserAdmin(msg)) { //reply = "you are an admin"; //} //bot.sendMessage(msg.channel, reply); //} //}, //"jsontest": { //process: function(bot, msg, suffix) { ////console.log("suffix: " + suffix); ////            var user_permissions = msg.channel.permissionsOf(msg.author); ////            if (!user_permissions.hasPermission("banMembers")) { ////                //only allow users who can ban people to run this command ////                //bot.sendMessage(msg.channel, "fuck"); ////                return; ////            } //if (isUserAdmin(msg)) { //checkIfStreamIsOffline(suffix); //bot.sendMessage(msg.channel, "checked: " + suffix); //} //} //},
-
     "makechannelactive": {
         description: "ADMIN ONLY: makes the channel active so bot commands will work",
         admin: true,
         onlyInActive: false,
         process: function(bot, msg, suffix) {
-        if (msg.channel.isPrivate){
-        //not in dms
-        	return;
-        }
+            if (msg.channel.isPrivate) {
+                //not in dms
+                return;
+            }
             if (!isChannelActive(msg)) {
                 var server = getServer(msg);
                 var serverActiveChannels = activeChannels[server.id];
@@ -233,10 +231,10 @@ var commands = {
         admin: true,
         onlyInActive: true,
         process: function(bot, msg, suffix) {
-        if (msg.channel.isPrivate){
-        //not in dms
-        	return;
-        }
+            if (msg.channel.isPrivate) {
+                //not in dms
+                return;
+            }
             var server = getServer(msg);
             var serverActiveChannels = activeChannels[server.id];
             var toRemove = serverActiveChannels.indexOf(msg.channel.id);
@@ -316,10 +314,10 @@ var commands = {
         admin: true,
         onlyInActive: false,
         process: function(bot, msg, suffix) {
-        if (msg.channel.isPrivate){
-        //not in dms
-        	return;
-        }
+            if (msg.channel.isPrivate) {
+                //not in dms
+                return;
+            }
             bot.setUsername(suffix, function(error) {
                 throw error;
                 console.log(error);
@@ -341,11 +339,168 @@ var commands = {
             }
         }
     },
+    "addstreamer": {
+        usage: "<TwitchUserName>",
+        description: "ADMIN ONLY: will send a msg to #streams when this streamer goes live",
+        admin: true,
+        onlyInActive: false,
+        process: function(bot, msg, suffix) {
+            streamers[suffix] = {
+                "active": true,
+                "lastCheck": false
+            };
+            require("fs").writeFile("./streamers.json", JSON.stringify(streamers, null, 2), null);
+            bot.sendMessage(msg.channel, "now checking for " + suffix + " to go live");
+        }
+    },
+    "removestreamer": {
+        usage: "<TwitchUserName>",
+        description: "ADMIN ONLY: removes stream from check list",
+        admin: true,
+        onlyInActive: false,
+        process: function(bot, msg, suffix) {
+            streamers[suffix] = {
+                "active": false,
+                "lastCheck": false
+            };
+            require("fs").writeFile("./streamers.json", JSON.stringify(streamers, null, 2), null);
+            bot.sendMessage(msg.channel, "removed: " + suffix);
+        }
+    },
+    "setstreamchannel": {
+        description: "ADMIN ONLY: run this in the channel you want the auto stream notifications to go",
+        admin: true,
+        onlyInActive: false,
+        process: function(bot, msg, suffix) {
+            streamChannel[getServer(msg).id] = {
+                "channel": msg.channel.id,
+                "active": true
+            };
+            require("fs").writeFile("./streamChannel.json", JSON.stringify(streamChannel, null, 2), null);
+            bot.sendMessage(msg.channel, "this channel is now stream channel");
+        }
+    },
+
+    "isstreamchannel": {
+        description: "DEBUG ADMIN: used to check if this channel is the stream channel",
+        admin: true,
+        onlyInActive: false,
+        process: function(bot, msg, suffix) {
+            console.log("channel id: " + msg.channel.id);
+            var id = streamChannel[getServer(msg).id].channel;
+            if (id === msg.channel.id) {
+                bot.sendMessage(msg.channel, "this channel is stream channel");
+            } else {
+                bot.sendMessage(msg.channel, "this channel is not stream channel");
+            }
+
+        }
+    },
+
+    "streamsbeingchecked": {
+        description: "ADMIN ONLY: will list all streams being check to go live",
+        admin: true,
+        onlyInActive: false,
+        process: function(bot, msg, suffix) {
+            var tmp = "";
+            //console.log("streamers: " + streamers.getOwnPropertyNames());
+            //for(var i = 0; i < streamers; i++){
+            //console.log("streamers["+i+"]: " + streamers[i])
+            //tmp += streamers[i];
+            //tmp += " ";
+            //}
+            for (var i in streamers) {
+                if (streamers.hasOwnProperty(i) && streamers[i].active) {
+                    tmp += i;
+                    tmp += " ";
+                    console.log(i + ": " + streamers[i]);
+                }
+            }
+            bot.sendMessage(msg.channel, "streams being checked: " + tmp);
+        }
+    },
+
+    "togglecheckstreams": {
+        description: "ADMIN ONLY: toggles the auto stream check",
+        admin: true,
+        onlyInActive: false,
+        process: function(bot, msg, suffix) {
+            var tmp = streamChannel[getServer(msg).id];
+            tmp.active = !tmp.active;
+            var info = "streams will now NOT be checked";
+            if (tmp.active) {
+                info = "streams will now be checked";
+            }
+            streamChannel[getServer(msg).id] = tmp;
+            require("fs").writeFile("./streamChannel.json", JSON.stringify(streamChannel, null, 2), null);
+            bot.sendMessage(msg.channel, info);
+        }
+    },
+
+    "checkstreams": {
+        description: "ADMIN ONLY: will list all streams being check to go live",
+        admin: false,
+        onlyInActive: true,
+        process: function(bot, msg, suffix) {
+            checkStreams(msg.channel);
+            //checkStreamsHelp();
+        }
+    },
+
+    "liststreamers": {
+        description: "ADMIN: lists the streamers to check when they go live",
+        admin: true,
+        onlyInActive: true,
+        process: function(bot, msg, suffix) {
+        	var info = "";
+            for (var i in streamers) {
+                if (streamers.hasOwnProperty(i) && streamers[i].active) {
+                  info += i;
+                  info += ", ";
+                }
+            }
+            if(info == ""){
+            	bot.sendMessage(msg.channel, "no streamers checked");
+            }
+            else{
+            	info = info.substring(0, info.length - 2);
+            	bot.sendMessage(msg.channel, "checking " + info);
+            }
+        }
+    },
+
+}
+
+
+function checkStreamsHelp() {
+    for (tmp in streamChannel) {
+        if (streamChannel[tmp].active) {
+            checkStreams(streamChannel[tmp].channel);
+        }
+    }
 }
 
 //when the bot is ready
 bot.on("ready", function() {
     console.log("Ready to begin! Serving in " + bot.channels.length + " channels");
+    try {
+        var CronJob = require('cron').CronJob;
+        var job = new CronJob({
+            cronTime: '00 00 0-23 * * *',
+            onTick: function() {
+                console.log("running cron")
+                    /*
+                     * Runs on the hr every hr
+                     */
+                checkStreamsHelp();
+            },
+            start: false,
+        });
+        job.start();
+    } catch (e) {
+        //cron not found
+        console.log("cron not found");
+    }
     //checkStreams();
 });
 
@@ -373,14 +528,14 @@ bot.on("message", function(msg) {
             cmdTxt = cmdTxt.toLowerCase();
             //console.log(cmdTxt);
 
-            alias = aliases[cmdTxt];
+            var alias = aliases[cmdTxt];
             if (alias) {
                 cmdTxt = alias[0];
                 suffix = alias[1] + " " + suffix;
             }
             var cmd = commands[cmdTxt];
             if (cmdTxt === "help") {
-
+				printHelp(msg);
             } else if (cmd) {
                 //command matched
                 try {
@@ -414,11 +569,11 @@ bot.on("message", function(msg) {
 //returns true if the user can run, false otherwise
 function checkCmd(cmd, msg) {
     if (msg.channel.isPrivate) {
-    	//make all cmds work in dms
+        //make all cmds work in dms
         return true;
     }
-    console.log("admin:" + cmd.admin + " active: " + cmd.onlyInActive)
-        //console.log(Object.getOwnPropertyNames(cmd).toString())
+    //console.log("admin:" + cmd.admin + " active: " + cmd.onlyInActive)
+    //console.log(Object.getOwnPropertyNames(cmd).toString())
     var adminCheck = false
     if (cmd.admin) {
         //console.log("admin def")
@@ -512,7 +667,7 @@ function isUserAdmin(msg) {
     return isAdmin;
 }
 
-function checkIfStreamIsOffline(twitchName) {
+function checkIfStreamIsOffline(channel, twitchName) {
     //do JSON.parse(d) look at !joke
     var url = "https://api.twitch.tv/kraken/streams/" + twitchName;
     var online = false;
@@ -520,10 +675,10 @@ function checkIfStreamIsOffline(twitchName) {
         res.on('data', (d) => {
             var tmp = d.toString().search('"stream":null');
             if (tmp != -1) {
-                console.log("offline stream")
+                console.log(twitchName + " is offline")
             } else {
-                console.log("online stream")
-                bot.sendMessage(msg.channel, twitchName + "is online http://www.twitch.tv/" + twitchName);
+                console.log(twitchName + " is online")
+                bot.sendMessage(channel, twitchName + " is online http://www.twitch.tv/" + twitchName);
             }
         });
 
@@ -548,10 +703,11 @@ function getServer(msg) {
     return msg.channel.server;
 }
 
-function checkStreams() {
+function checkStreams(channel) {
     for (var i in streamers) {
         if (streamers.hasOwnProperty(i) && streamers[i].active) {
-            console.log(i + "online: " + checkIfStreamIsOffline(i));
+            checkIfStreamIsOffline(channel, i);
+            //console.log(i + "online: " + checkIfStreamIsOffline(i));
         }
     }
 }
