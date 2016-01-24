@@ -534,20 +534,9 @@ var commands = {
         admin: true,
         onlyInActive: false,
         process: function(bot, msg, suffix) {
-            //TODO: regex
-            //check to make sure first char is '"' and has '" -" at the end			
-            if (suffix.charAt(0) != '"') {
-                bot.sendMessage(msg.channel, "first charcter of quote must be a '\"' ");
-                return;
-            }
-            var tmp = suffix.substring(1);
-            if (tmp.indexOf('\"') == -1) {
-                bot.sendMessage(msg.channel, "needs a second '\"' at the end of the quote ");
-                return;
-            }
-            if (tmp.indexOf("-") == -1) {
-                bot.sendMessage(msg.channel, "put an author after the quote with a -");
-                return;
+            if(suffix.match("\"(.+?)\" - ..*") == null) {
+              bot.sendMessage(msg.channel, "Quote must be in the format: " + usage);
+              return;
             }
             quotes.push(suffix);
             fs.writeFile("./quotes.json", JSON.stringify(quotes), function(err) {
@@ -653,9 +642,9 @@ var commands = {
             command = command.toLowerCase();
 			if(command == "setcommandactive"){
 				bot.sendMessage(msg.channel, "lol you thought");
-				return;		
+				return;
 			}
-			
+
 //            if (!arr[2]) {
 //                console.log("no true/false val passed")
 //                return;
@@ -669,7 +658,7 @@ var commands = {
                 require("fs").writeFile("./activeCommandOveride.json", JSON.stringify(activeCommandOveride, null, 2), null);
 				bot.sendMessage(msg.channel, command + " available only in active channels: " + boolVal);
             }else{
-				bot.sendMessage(msg.channel, "last paramter has to be true or false")			
+				bot.sendMessage(msg.channel, "last paramter has to be true or false")
 			}
         }
     },
@@ -684,8 +673,8 @@ var commands = {
     //			bot.sendMessage(msg.channel, "Google api module not installed");
     //			return;
     //			}
-    //			
-    //		} 
+    //
+    //		}
     //	},
 
 }
@@ -809,8 +798,8 @@ function checkCmd(cmd,cmdTxt, msg) {
 		var tmp = activeCommandOveride[cmdTxt]
 		if(typeof tmp !== 'undefined'){
 			console.log("overiding onlyInActive for " + cmdTxt + " with " + tmp);
-			onlyInActive = tmp;		
-		} 
+			onlyInActive = tmp;
+		}
         if (onlyInActive) {
             //
             if (isChannelActive(msg)) {
@@ -833,7 +822,7 @@ function checkCmd(cmd,cmdTxt, msg) {
 
 //returns a string that is a filename found in the folderpath
 function getRandomPicFromFolder(folderPath, msg) {
-    //var files = fs.readdirSync(folderPath); //array of files found  
+    //var files = fs.readdirSync(folderPath); //array of files found
     fs.readdir(folderPath, (err, files) => {
         if (err) throw err;
         var newArr = []
