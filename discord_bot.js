@@ -13,10 +13,29 @@ var bot = new Discord.Client();
 var aliases;
 var admins;
 var activeChannels;
-//var streamers;
-//var streamChannel;
+var quotes;
+var activeCommandOveride;
+
+var streamers;
+var streamChannel;
 var fs = require("fs");
 
+//var google;
+//var OAuth2;
+//try {
+//    google = require('googleapis');
+//    OAuth2 = google.auth.OAuth2;
+//} catch (e) {
+//    console.log("no google api package");
+//}
+
+
+try {
+    quotes = require("./quotes.json");
+    //console.log(quotes);
+} catch (e) {
+    quotes = [];
+}
 
 try {
     aliases = require("./alias.json");
@@ -39,8 +58,6 @@ try {
     streamChannel = {};
 }
 
-
-
 try {
     activeChannels = require("./activeChannels.json");
 } catch (e) {
@@ -54,6 +71,13 @@ try {
     //No streamers defined
     streamers = {};
 }
+
+try {
+    activeCommandOveride = require("./activeCommandOveride.json")
+} catch (e) {
+    activeCommandOveride = {};
+}
+
 
 var https = require('https');
 var http = require('http');
@@ -233,7 +257,7 @@ var commands = {
     "deactivatechannel": {
         description: "ADMIN ONLY: makes the channel not active so bot will not work",
         admin: true,
-        onlyInActive: true,
+        onlyInActive: false,
         process: function(bot, msg, suffix) {
             if (msg.channel.isPrivate) {
                 //not in dms
@@ -274,7 +298,7 @@ var commands = {
     "imguralbum": {
         usage: "<link to album>",
         admin: false,
-        onlyInActive: true,
+        onlyInActive: false,
         description: "posts a random picture from the album passed",
         process: function(bot, msg, suffix) {
             var imgur = require("imgur");
@@ -337,7 +361,7 @@ var commands = {
         admin: true,
         onlyInActive: false,
         process: function(bot, msg, suffix) {
-        	if (msg.channel.isPrivate) {
+            if (msg.channel.isPrivate) {
                 //not in dms
                 console.log("no remove streamer in dms");
                 return;
@@ -356,7 +380,7 @@ var commands = {
         admin: true,
         onlyInActive: false,
         process: function(bot, msg, suffix) {
-        	if (msg.channel.isPrivate) {
+            if (msg.channel.isPrivate) {
                 //not in dms
                 console.log("no remove streamer in dms");
                 return;
@@ -393,7 +417,7 @@ var commands = {
         admin: true,
         onlyInActive: false,
         process: function(bot, msg, suffix) {
-        	if (msg.channel.isPrivate) {
+            if (msg.channel.isPrivate) {
                 //not in dms
                 console.log("no streamchannel in dms");
                 return;
@@ -412,7 +436,7 @@ var commands = {
         admin: true,
         onlyInActive: false,
         process: function(bot, msg, suffix) {
-        	if (msg.channel.isPrivate) {
+            if (msg.channel.isPrivate) {
                 //not in dms
                 console.log("no streamchannel in dms");
                 return;
@@ -456,7 +480,7 @@ var commands = {
         admin: true,
         onlyInActive: false,
         process: function(bot, msg, suffix) {
-        	if (msg.channel.isPrivate) {
+            if (msg.channel.isPrivate) {
                 //not in dms
                 console.log("no togglestreamcheck in dms");
                 return;
@@ -488,28 +512,187 @@ var commands = {
         admin: true,
         onlyInActive: true,
         process: function(bot, msg, suffix) {
-        	var info = "";
+            var info = "";
             for (var i in streamers) {
                 if (streamers.hasOwnProperty(i) && streamers[i].active) {
-                  info += i;
-                  info += ", ";
+                    info += i;
+                    info += ", ";
                 }
             }
-            if(info == ""){
-            	bot.sendMessage(msg.channel, "no streamers checked");
-            }
-            else{
-            	info = info.substring(0, info.length - 2);
-            	bot.sendMessage(msg.channel, "checking " + info);
+            if (info == "") {
+                bot.sendMessage(msg.channel, "no streamers checked");
+            } else {
+                info = info.substring(0, info.length - 2);
+                bot.sendMessage(msg.channel, "checking " + info);
             }
         }
     },
+
+    "savequote": {
+        usage: "<'\"QUOTETEXT\" - person who said it'>",
+        description: "ADMIN ONLY: saves the quote passed",
+        admin: true,
+        onlyInActive: false,
+        process: function(bot, msg, suffix) {
+            //TODO: regex
+            //check to make sure first char is '"' and has '" -" at the end			
+            if (suffix.charAt(0) != '"') {
+                bot.sendMessage(msg.channel, "first charcter of quote must be a '\"' ");
+                return;
+            }
+            var tmp = suffix.substring(1);
+            if (tmp.indexOf('\"') == -1) {
+                bot.sendMessage(msg.channel, "needs a second '\"' at the end of the quote ");
+                return;
+            }
+            if (tmp.indexOf("-") == -1) {
+                bot.sendMessage(msg.channel, "put an author after the quote with a -");
+                return;
+            }
+            quotes.push(suffix);
+            fs.writeFile("./quotes.json", JSON.stringify(quotes), function(err) {
+                if (err) {
+                    console.log(err);
+                }
+            });
+        }
+    },
+
+    "quote": {
+        description: "randomly chooses a quote to say",
+        admin: false,
+        onlyInActive: false,
+        process: function(bot, msg, suffix) {
+            if (quotes.length == 0) {
+                bot.sendMessage(msg.channel, "save quote(s) first with !savequote");
+                return;
+            }
+            var randomNum = Math.floor(Math.random() * quotes.length);
+            bot.sendMessage(msg.channel, quotes[randomNum]);
+        }
+    },
+
+    "removequote": {
+        usage: "<quote index>",
+        description: "ADMIN ONLY: removes the quote at the index passed, use !showquotes to get a pm with the indices of each quote",
+        admin: true,
+        onlyInActive: false,
+        process: function(bot, msg, suffix) {
+            suffix = suffix.trim();
+            var index = parseInt(suffix);
+            if (index >= quotes.length || index < 0) {
+                bot.sendMessage(msg.channel, "index passed is greater than the number of quotes or is negative");
+                return;
+            }
+            quotes.splice(index, 1);
+            fs.writeFile("./quotes.json", JSON.stringify(quotes), function(err) {
+                if (err) {
+                    console.log(err);
+                }
+            });
+        }
+    },
+
+    "showquotes": {
+        description: "ADMIN ONLY: pms you a list of every quote and its index",
+        admin: true,
+        onlyInActive: false,
+        process: function(bot, msg, suffix) {
+            //check for char limit of msg
+            var info = "";
+            for (var i = 0; i < quotes.length; i++) {
+                info = info + "\n" + i + ": " + quotes[i];
+            }
+            while (info.length >= 2000) {
+                var tmp = info.substring(0, 2000);
+                var index = tmp.lastIndexOf("\n");
+                tmp = tmp.substring(0, index);
+                bot.sendMessage(msg.author, tmp);
+                info = info.substring(index + 1);
+            }
+            bot.sendMessage(msg.author, info);
+        }
+    },
+
+    "getconfigfiles": {
+        description: "ADMIN ONLY: pms you all the relavent config/data files for the bot",
+        admin: true,
+        onlyInActive: false,
+        process: function(bot, msg, suffix) {
+            var files = [
+                "./activeChannels.json",
+                "./admins.json",
+                "./alias.json",
+                "./streamChannel.json",
+                "./streamers.json",
+                "./quotes.json",
+                "./activeCommandOveride.json"
+            ]
+            for (var i in files) {
+                var filePath = files[i];
+                try {
+                    fs.accessSync(filePath, fs.F_OK);
+                    bot.sendFile(msg.author, filePath, filePath.substring(2));
+                } catch (e) {
+                    console.log(filePath + " was not found")
+                }
+            }
+        }
+    },
+
+    "setcommandactive": {
+        usage: "<Command> <True/False>",
+        description: "ADMIN ONLY: set if the passed command should be allowed in active channels",
+        admin: true,
+        onlyInActive: false,
+        process: function(bot, msg, suffix) {
+            var arr = suffix.split(" ");
+			console.log(arr.toString())
+            var command = arr[0];
+
+            command = command.toLowerCase();
+			if(command == "setcommandactive"){
+				bot.sendMessage(msg.channel, "lol you thought");
+				return;		
+			}
+			
+//            if (!arr[2]) {
+//                console.log("no true/false val passed")
+//                return;
+//            }
+            var tmp = arr[1].toLowerCase();
+            if (tmp == "true" || tmp == "false") {
+                var boolVal = true;
+                if (tmp == "false")
+                    boolVal = false;
+                activeCommandOveride[command] = boolVal;
+                require("fs").writeFile("./activeCommandOveride.json", JSON.stringify(activeCommandOveride, null, 2), null);
+				bot.sendMessage(msg.channel, command + " available only in active channels: " + boolVal);
+            }else{
+				bot.sendMessage(msg.channel, "last paramter has to be true or false")			
+			}
+        }
+    },
+
+
+    //	"addvidtoplaylist":{
+    //	description: "adds the video passed to the specified playlist",
+    //	admin: false,
+    //	onlyInActive: false,
+    //	process: function(bot, msg, suffix){
+    //			if(!google){
+    //			bot.sendMessage(msg.channel, "Google api module not installed");
+    //			return;
+    //			}
+    //			
+    //		} 
+    //	},
 
 }
 
 
 function checkStreamsHelp() {
-    for (tmp in streamChannel) {
+    for (var tmp in streamChannel) {
         if (streamChannel[tmp].active) {
             checkStreams(streamChannel[tmp].channel);
         }
@@ -571,11 +754,11 @@ bot.on("message", function(msg) {
             }
             var cmd = commands[cmdTxt];
             if (cmdTxt === "help") {
-				printHelp(msg);
+                printHelp(msg);
             } else if (cmd) {
                 //command matched
                 try {
-                    if (checkCmd(cmd, msg))
+                    if (checkCmd(cmd,cmdTxt, msg))
                         cmd.process(bot, msg, suffix);
                     else
                         console.log(cmdTxt + " was not run")
@@ -603,13 +786,12 @@ bot.on("message", function(msg) {
 
 //checks if the user who sent the msg can run the passed command in the channel
 //returns true if the user can run, false otherwise
-function checkCmd(cmd, msg) {
+function checkCmd(cmd,cmdTxt, msg) {
+//clean up
     if (msg.channel.isPrivate) {
         //make all cmds work in dms
         return true;
     }
-    //console.log("admin:" + cmd.admin + " active: " + cmd.onlyInActive)
-    //console.log(Object.getOwnPropertyNames(cmd).toString())
     var adminCheck = false
     if (cmd.admin) {
         //console.log("admin def")
@@ -623,7 +805,13 @@ function checkCmd(cmd, msg) {
     }
     if (adminCheck) {
         //if passed admin check
-        if (cmd.onlyInActive) {
+		var onlyInActive = cmd.onlyInActive
+		var tmp = activeCommandOveride[cmdTxt]
+		if(typeof tmp !== 'undefined'){
+			console.log("overiding onlyInActive for " + cmdTxt + " with " + tmp);
+			onlyInActive = tmp;		
+		} 
+        if (onlyInActive) {
             //
             if (isChannelActive(msg)) {
                 return true;
@@ -783,4 +971,3 @@ function printHelp(msg) {
 
 
 bot.login(AuthDetails.email, AuthDetails.password);
-
