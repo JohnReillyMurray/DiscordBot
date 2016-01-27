@@ -539,6 +539,7 @@ var commands = {
               return;
             }
             quotes.push(suffix);
+            bot.sendMessage(msg.channel, "Quote saved!");
             fs.writeFile("./quotes.json", JSON.stringify(quotes), function(err) {
                 if (err) {
                     console.log(err);
